@@ -4,6 +4,7 @@ const { join, basename } = require("path");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const fs = require("fs");
+const { type } = require("os");
 
 const app = express();
 const server = createServer(app);
@@ -23,7 +24,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/chatApp", {
 mongoose.connection.on("connected", () => console.log("Mongoose connected"));
 mongoose.connection.on("error", (err) => console.error("Mongoose error:", err));
 
-// Message schema
+// MESSAGE schema
 const messageSchema = new mongoose.Schema({
   roomId: { type: String, required: true },
   sender: { type: String, default: "Anonymous" },
@@ -36,6 +37,59 @@ const messageSchema = new mongoose.Schema({
   timeStamp: { type: Date, default: Date.now },
 });
 const Message = mongoose.model("Message", messageSchema);
+
+//USER schema
+const userSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  name: {
+    type: String,
+    default: "Anonymus",
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  chatRooms: {
+    type: [String],
+    default: [],
+  },
+});
+const User = mongoose.model("User", userSchema);
+
+//Express endpoints - CREATE new user
+app.post("/users", async (req,res) => {
+  try{
+    const { userId, name, email } = req.body;
+    if (!userName || !name || !email) {
+      return res.status(400).json({error: "Username and emai required"});
+    }
+
+    const existingUser = await User.findOne({ $or: [{userId}, {email} ]});
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const newUser = new User({ userId, name, email });
+    await newUser.save();
+    res.status(201).json({ message: "User created successfully", user: newUser });
+  } catch (err) {
+    console.error("Error creating user:", err);
+  }
+});
+
+//GET new user
+app.get("/users", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+  }
+});
 
 // Temporary storage for incoming file chunks
 const incomingFiles = Object.create(null);
