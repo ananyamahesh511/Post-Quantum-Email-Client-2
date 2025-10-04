@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = 3000;
-const HANDLERS_PATH = path.join(__dirname, 'socket-handlers');
+const HANDLERS_PATH = path.join(__dirname, 'handlers');
 
 const eventHandlers = new Map();
 
