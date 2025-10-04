@@ -7,8 +7,10 @@ const uploadForm = document.getElementById("uploadForm");
 const fileInput = document.getElementById("fileInput");
 const fileText = document.getElementById("fileText");
 
-// Ask user for room
-let currentRoom = prompt("Enter room name:", "general") || "general";
+// generating id for chatroom
+const uid = new ShortUniqueId({ length: 6 });
+let currentRoom = uid.rnd();
+console.log("room joined: ",currentRoom);
 socket.emit("joinRoom", currentRoom);
 
 // Append message to DOM

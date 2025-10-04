@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  phone: {
+    type: String,
+    required: true,
+  },
   chatRooms: {
     type: [String],
     default: [],
@@ -60,15 +64,59 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model("User", userSchema);
 
+//CHATROOM schema
+const chatRoomSchema = new mongoose.Schema({
+  messages: [messageSchema],
+  users: [{ type: String, ref: "User" }],
+});
+const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
+
+//Express endpoint to create a new chatroom
+app.post('/chatrooms', async (req, res) => {
+  try {
+    const { person1, person2 } = req.body;
+    // function to find or create user
+    async function findOrCreateUser(person) {
+      const user = await User.findOne({ email: person.email });
+      if (!user) {
+        user = new User({
+          userId: new mongoose.Types.ObjectId().toString(),
+          name: person.name || person.email.split("@")[0],
+          email: person.email,
+          phone: person.phone,
+        });
+        await user.save();
+      }
+      return user;
+    }
+    const user1 = await findOrCreateUser(person1);
+    const user2 = await findOrCreateUser(person2);
+
+    //checking if any chatroom between these two users exists
+    let room = await ChatRoom.findOne ({
+      users: { $all: [user1.userId, user2.userId] };
+    });
+
+    if (!room) {
+      room = new ChatRoom ({
+        users: [user1.userId, user2.userId],
+        messages: [],
+      });
+      await room.save();
+    }
+    res.json({ roomId: room._id, users: room.users });
+  }
+})
+
 //Express endpoints - CREATE new user
-app.post("/users", async (req,res) => {
-  try{
+app.post("/users", async (req, res) => {
+  try {
     const { userId, name, email } = req.body;
     if (!userName || !name || !email) {
-      return res.status(400).json({error: "Username and emai required"});
+      return res.status(400).json({ error: "Username and emai required" });
     }
 
-    const existingUser = await User.findOne({ $or: [{userId}, {email} ]});
+    const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
     }
