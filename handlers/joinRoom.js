@@ -1,14 +1,22 @@
-const Message = require('../models/Chatroom').Message;
+const ChatRoom = require('../models/Chatroom').ChatRoom;
 
 module.exports = async (io, socket, data) => {
-    const { roomId } = data;
-    socket.join(roomId);
-    console.log(`${socket.id} joined room ${roomId}`);
+    try{
+      socket.join(roomId);
+      console.log(`${socket.id} joined room ${roomId}`);
 
-    try {
-        const history = await Message.find({ roomId }).sort({ timeStamp: 1 }).limit(50);
-        socket.emit("chatHistory", history);
+      //finding the chatroom and returning messages
+      const chatRoom = await ChatRoom.findOne({roomId}).populate("users");
+      if (!chatRoom) {
+        socket.emit('chatHistory', []);
+        return;
+      }
+
+      //sending all messages stored in chat room
+      socket.emit("chatHistory", chatRoom.messages);
     } catch (err) {
-        console.error(err);
+      console.error("Error fetching chatroom messages:", err);
+      socket.emit("chatHistory", []);
     }
+
 };

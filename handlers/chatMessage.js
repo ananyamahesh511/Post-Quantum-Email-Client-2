@@ -1,12 +1,19 @@
-const Message = require('../models/Chatroom').Message;
+const ChatRoom = require('../models/Chatroom').ChatRoom;
 
 module.exports = async (io, socket, data) => {
-    const { text, sender, roomId } = data;
-    try {
-        const msg = new Message({ roomId, sender: sender || "Anonymous", text });
-        await msg.save();
-        io.to(roomId).emit("chatMessage", msg);
+    try{
+      const chatRoom = await ChatRoom.findOne({roomId});
+      if (!chatRoom) return;
+
+      const newMessage = {
+      sender,
+      text,
+      createdAt: new Date(),
+      };
+      chatRoom.messages.push(newMessage);
+      await chatRoom.save();
     } catch (err) {
-        console.error("Error saving text message:", err);
+    console.error("Error saving chat message:", err);
     }
+
 };
