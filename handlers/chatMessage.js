@@ -24,7 +24,7 @@ module.exports = async (io, socket, data) => {
 
       io.to(roomId).emit("chatMessage", newMessage);
 
-      if( ttl != -1 && ttl > 0) {
+      if(ttl > 0) {
         setTimeout( async () => {
             try{
                 const room = chatRoom.findOne({roomId: roomId});
@@ -36,10 +36,11 @@ module.exports = async (io, socket, data) => {
             } catch (err) {
                 console.log("Error detected in ttl: ", err);
             }
-        }, ttl * 100);
+        }, ttl);
       }
     } catch (err) {
     console.error("Error saving chat message:", err);
     }
+
 
 };
