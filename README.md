@@ -229,7 +229,6 @@ POST /client/users
 Content-Type: application/json
 
 {
-  "userId": "string",
   "name": "string",
   "email": "string"
 }
@@ -339,7 +338,8 @@ POST /client/permissions
 Content-Type: application/json
 
 {
-  "field": "isExports"  // or "isScreenshots"
+  "field": "isExports" | "isScreenshots",
+  "status": boolean
 }
 ```
 
