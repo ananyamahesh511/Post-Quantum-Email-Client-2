@@ -1,6 +1,7 @@
+const Message = require('../models/Chatroom').Message;
 
-
-module.exports = (io, socket, data) => {
+module.exports = async (io, socket, data) => {
+    const { text, sender, roomId } = data;
     try {
         const msg = new Message({ roomId, sender: sender || "Anonymous", text });
         await msg.save();
