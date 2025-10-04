@@ -1,7 +1,7 @@
 const ChatRoom = require("../models/Chatroom").ChatRoom;
 
-module.exports = async (io, socket) => {
-    socket.on("messageSeen", async({roomId, messageIds}) => {
+module.exports = async (io, socket, data) => {
+    const { roomId, messageIds } = data;
         try{
             const chatRoom = await ChatRoom.findOne({roomId});
             if (!chatRoom) return;
@@ -17,5 +17,4 @@ module.exports = async (io, socket) => {
         } catch (err) {
             console.error("Error updating message seen status: ", err);
         }
-    }); 
 }
