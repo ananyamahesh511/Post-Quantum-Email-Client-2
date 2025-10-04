@@ -7,9 +7,7 @@ module.exports = async (io, socket, data) => {
             if (!chatRoom) return;
 
             chatRoom.messages = chatRoom.messages.map(msg => {
-                if(messageIds.includes(msg.messageId)) {
-                    return {...msg.toObject(), seen: true};
-                }
+                return {...msg.toObject(), seen: true};
             });
             await chatRoom.save();
 
