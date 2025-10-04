@@ -13,6 +13,7 @@ const MessageSchema = new mongoose.Schema({
     },
     timeStamp: { type: Date, default: Date.now() },
     seen: {type:Boolean, default: false},
+    ttl: Number,
 });
 
 const ChatroomSchema = new mongoose.Schema({

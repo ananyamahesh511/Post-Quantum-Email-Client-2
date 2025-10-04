@@ -3,7 +3,7 @@ const ChatRoom = require("../models/Chatroom").ChatRoom;
 module.exports = async (io, socket, data) => {
     const { roomId, messageIds } = data;
         try{
-            const chatRoom = await ChatRoom.findOne({roomId});
+            const chatRoom = await ChatRoom.findOne({roomId: roomId});
             if (!chatRoom) return;
 
             chatRoom.messages = chatRoom.messages.map(msg => {
@@ -17,4 +17,4 @@ module.exports = async (io, socket, data) => {
         } catch (err) {
             console.error("Error updating message seen status: ", err);
         }
-}
+};
