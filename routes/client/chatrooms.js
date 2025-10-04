@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const User = require('../../models/User');
+const ChatRoom = require('../../models/Chatroom').Chatroom;
 
 module.exports = {
 	name: 'chatrooms',

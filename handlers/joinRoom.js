@@ -1,6 +1,7 @@
+const Message = require('../models/Chatroom').Message;
 
-
-module.exports = (io, socket, data) => {
+module.exports = async (io, socket, data) => {
+    const { roomId } = data;
     socket.join(roomId);
     console.log(`${socket.id} joined room ${roomId}`);
 

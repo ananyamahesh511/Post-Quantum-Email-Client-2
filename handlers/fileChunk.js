@@ -1,8 +1,11 @@
 const fs = require('fs');
+const { join, basename } = require('path');
 const Message = require('../models/Chatroom').Message;
 
+const UPLOAD_DIR = join(__dirname, '..', 'uploads');
+const incomingFiles = Object.create(null);
 
-module.exports = (io, socket, data) => {
+module.exports = async (io, socket, data) => {
 	try {
 		const { fileId, chunk, fileName, mimeType, text, sender, isLastChunk, roomId } = data;
 		if (!fileId) return;

@@ -1,4 +1,4 @@
-const { users} = require('../../lib/data');
+const User = require('../../models/User');
 
 module.exports = {
 	name: 'users',
