@@ -8,10 +8,38 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const adminRoutes = fs
+	.readdirSync('./routes/admin')
+	.filter((file) => file.endsWith('.js'));
+
+const clientRoutes = fs
+	.readdirSync('./routes/client')
+	.filter((file) => file.endsWith('.js'));
+
 const PORT = 3000;
 const HANDLERS_PATH = path.join(__dirname, 'handlers');
 
 const eventHandlers = new Map();
+
+async function connect() {
+	console.log(
+		'------------------ HACKATHON - Websocket Server ------------------------------------------------',
+	);
+	mongoose.connect("mongodb://127.0.0.1:27017/chatApp", {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    .then(() => console.log('Established connection with Database'))
+    .catch((error) => console.error(error));
+
+	await handleRoutes();
+
+	server.listen(process.env.PORT, () => {
+		console.log(
+			`API running on: http://localhost:${process.env.PORT}/`,
+		);
+	});
+}
 
 /**
  * Dynamically loads and registers all socket event handlers from a directory.
@@ -75,5 +103,84 @@ io.on('connection', (socket) => {
     });
 });
 
+const routePaths = {
+	adminRoutes: 'admin',
+	clientRoutes: 'client',
+};
+
+const routeRegistry = new Map();
+
+async function loadEndpoint(routePath, fileName) {
+	const endpointPath = path.join(__dirname, 'routes', routePath, fileName);
+	return require(endpointPath);
+}
+
+async function registerRoute(App, basePath, methods) {
+	const [fileName] = basePath.split('/').slice(-1);
+	const endpoint = await loadEndpoint(
+		basePath.split('/').slice(1, -1).join('/'),
+		`${fileName}.js`,
+	);
+
+	methods.forEach((method) => {
+		if (endpoint[method]) {
+			App[method](basePath, async (req, res) => {
+				try {
+					await endpoint[method](req, res);
+				} catch (error) {
+					console.error(`Error handling route: ${error}`);
+					res.sendStatus(500);
+				}
+			});
+			routeRegistry.set(
+				`${basePath}_${method.toLowerCase()}`,
+				endpoint[method],
+			);
+		}
+	});
+}
+
+async function handleRequest(req, res) {
+	const { method, originalUrl } = req;
+	const handler = routeRegistry.get(`${originalUrl}_${method.toLowerCase()}`);
+
+	if (handler) {
+		try {
+			await handler(req, res);
+		} catch (error) {
+			console.error(`Error handling route: ${error}`);
+			res.sendStatus(500);
+		}
+	} else {
+		console.log(
+			`Request sent from IP: ${req.ip} for invalid method  ${method}: ${originalUrl}`,
+		);
+		res.sendStatus(404);
+	}
+}
+
+async function handleRoutes() {
+	const methods = ['get', 'post', 'put', 'delete'];
+	const routeDirs = [adminRoutes, clientRoutes];
+
+	for (const dir of routeDirs) {
+		const routePath =
+			routePaths[dir === adminRoutes ? 'adminRoutes' : 'clientRoutes'];
+		const fileNames = await fsProm.readdir(
+			path.join(__dirname, 'routes', routePath),
+		);
+
+		for (const fileName of fileNames) {
+			if (fileName.endsWith('.js')) {
+				const basePath = `/${routePath}/${path.basename(fileName, '.js')}`;
+				await registerRoute(app, basePath, methods);
+			}
+		}
+	}
+	app.use(handleRequest);
+	console.log('Registered all Routes');
+}
+
 app.use(express.static('public'));
-server.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+
+connect();
