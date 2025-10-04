@@ -25,7 +25,7 @@ module.exports = {
 
             //checking if any chatroom between these two users exists
             let room = await ChatRoom.findOne ({
-                users: { $all: [user1.userId, user2.userId] };
+                users: { $all: [user1.userId, user2.userId] }
             });
 
             if (!room) {
